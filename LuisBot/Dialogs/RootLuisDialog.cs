@@ -69,10 +69,10 @@ namespace LuisBot.Dialogs
             {
                 var searchQuery = await result;
 
-                var tipoAgendamento = searchQuery.TipoConta;
-                var data = searchQuery.Numero;
+                var tipoConta = searchQuery.TipoConta;
+                var numero = searchQuery.Numero;
 
-                var message = $"Pelo que consultei aqui, para sua conta de {tipoAgendamento} existe uma pendência de R$180,00 para ser paga até {data}! Abraços!";
+                var message = $"Pelo que consultei aqui, para sua conta de {tipoConta} existe uma pendência de R$180,00 para ser paga até {numero}! Abraços!";
                 await context.PostAsync(message);
             }
             catch (FormCanceledException ex)
