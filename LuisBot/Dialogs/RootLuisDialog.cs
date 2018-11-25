@@ -1,4 +1,5 @@
-﻿using Microsoft.Bot.Builder.Dialogs;
+﻿using LuisBot.Models;
+using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.FormFlow;
 using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
@@ -7,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace LuisBot.Dialogs
 {
-    [LuisModel("cf355725-13f6-4b64-b7d6-33583d7919e5", "90a2e1e2de074cc49a93f7fa3c450099")]
+    //[LuisModel("cf355725-13f6-4b64-b7d6-33583d7919e5", "90a2e1e2de074cc49a93f7fa3c450099")]
+    [LuisModel("c376f36b-8bd0-42cc-94f9-9f56c245c00a", "0a1b071990ae4f118d11703a449754b9")]
     [Serializable]
     public class RootLuisDialog : LuisDialog<object>
     {
@@ -15,62 +17,62 @@ namespace LuisBot.Dialogs
         [LuisIntent("None")]
         public async Task None(IDialogContext context, LuisResult result)
         {
-            string message = $"Desculpe, eu ainda não entendo sobre '{result.Query}'. Mas se quiser agendar um horário, é comigo mesmo!";
+            string message = $"Desculpe, eu não entendi o que quis dizer com '{result.Query}'. Poderia ser um pouco mais claro?";
 
             await context.PostAsync(message);
 
             context.Wait(this.MessageReceived);
         }
-
-        [LuisIntent("Cumprimento")]
+        
+        [LuisIntent("Saudação")]
         public async Task Cumprimento(IDialogContext context, LuisResult result)
         {
-            string message = $"Olá! Que tal agendar um horário conosco? Talvez um corte, ou uma tintura!";
+            string message = $"Fala ai, posso te ajudar a descobrir se existe alguma conta pendente, se quiser.";
 
             await context.PostAsync(message);
 
             context.Wait(this.MessageReceived);
         }
 
-        [LuisIntent("Agendamento")]
+        [LuisIntent("Consultar")]
         public async Task Agendamento(IDialogContext context, LuisResult result)
         {
             await context.PostAsync("Ok, vamos lá...");
 
-            var form = new AgendamentoForm();
+            var form = new ConsultaForm();
 
             //Build AgendamentoForm
-            var agendamentoFormDialog = new FormDialog<AgendamentoForm>(form, this.BuildAgendamentoForm, FormOptions.PromptInStart, result.Entities);
+            var agendamentoFormDialog = new FormDialog<ConsultaForm>(form, this.BuildAgendamentoForm, FormOptions.PromptInStart, result.Entities);
 
             //Show Result
             context.Call(agendamentoFormDialog, this.ShowResult);
         }
 
-        private IForm<AgendamentoForm> BuildAgendamentoForm()
+        private IForm<ConsultaForm> BuildAgendamentoForm()
         {
-            OnCompletionAsyncDelegate<AgendamentoForm> processBooking = async (context, state) =>
+            OnCompletionAsyncDelegate<ConsultaForm> processBooking = async (context, state) =>
             {
-                var message = "Obrigado pelo contato, estamos prestes a agendar seu horário...";
+                var message = "Já estou consultando...";
                 await context.PostAsync(message);
             };
 
-            return new FormBuilder<AgendamentoForm>()
-                .Field(nameof(AgendamentoForm.TipoAgendamento), (state) => string.IsNullOrEmpty(state.TipoAgendamento))
-                .Field(nameof(AgendamentoForm.Data), (state) => string.IsNullOrEmpty(state.Data))
+            return new FormBuilder<ConsultaForm>()
+                .Field(nameof(ConsultaForm.TipoConta), (state) => string.IsNullOrEmpty(state.TipoConta))
+                .Field(nameof(ConsultaForm.Numero), (state) => string.IsNullOrEmpty(state.Numero))
                 .OnCompletion(processBooking)
                 .Build();
         }
 
-        private async Task ShowResult(IDialogContext context, IAwaitable<AgendamentoForm> result)
+        private async Task ShowResult(IDialogContext context, IAwaitable<ConsultaForm> result)
         {
             try
             {
                 var searchQuery = await result;
 
-                var tipoAgendamento = searchQuery.TipoAgendamento;
-                var data = searchQuery.Data;
+                var tipoAgendamento = searchQuery.TipoConta;
+                var data = searchQuery.Numero;
 
-                var message = $"Seu horário para realizar {tipoAgendamento} foi agendado para {data}! Estaremos lhe aguardando!";
+                var message = $"Pelo que consultei aqui, para sua conta de {tipoAgendamento} existe uma pendência de R$180,00 para ser paga até {data}! Abraços!";
                 await context.PostAsync(message);
             }
             catch (FormCanceledException ex)
@@ -83,7 +85,7 @@ namespace LuisBot.Dialogs
                 }
                 else
                 {
-                    reply = $"Oops! Alguma de errado ocorreu :( Detalhes técnicos: {ex.InnerException.Message}";
+                    reply = $"Eitaaa! Alguma coisa de estranha aconteceu comigo :( Detalhes técnicos: {ex.InnerException.Message}";
                 }
 
                 await context.PostAsync(reply);
@@ -92,18 +94,6 @@ namespace LuisBot.Dialogs
             {
                 context.Done<object>(null);
             }
-        }
-
-        [Serializable]
-        public class AgendamentoForm
-        {
-            [Prompt("O que você gostaria de fazer no seu cabelo? {||}", AllowDefault = BoolDefault.True)]
-            [Describe("Tipo, exemplo: tintura")]
-            public string TipoAgendamento { get; set; }
-
-            [Prompt("Para quando você gostaria de agendar? {||}", AllowDefault = BoolDefault.True)]
-            [Describe("Data, exemplo: amanhã, próxima semana ou qualquer data, como: 12-06-2018")]
-            public string Data { get; set; }
         }
     }
 }

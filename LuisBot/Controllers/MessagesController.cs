@@ -16,9 +16,18 @@ namespace LuisBot
         /// </summary>
         public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
         {
+
             if (activity.GetActivityType() == ActivityTypes.Message)
             {
-                await Conversation.SendAsync(activity, () => new Dialogs.RootLuisDialog());
+                try
+                {
+                    await Conversation.SendAsync(activity, () => new Dialogs.RootLuisDialog());
+                }
+                catch (System.Exception ex)
+                {
+
+                    throw new System.Exception(ex.Message);
+                }
             }
             else
             {
